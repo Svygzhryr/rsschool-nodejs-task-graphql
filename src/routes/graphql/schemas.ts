@@ -1,5 +1,16 @@
 import { Type } from '@fastify/type-provider-typebox';
-import { buildSchema } from 'graphql';
+import {
+  buildSchema,
+  graphql,
+  GraphQLBoolean,
+  GraphQLEnumType,
+  GraphQLFloat,
+  GraphQLID,
+  GraphQLInt,
+  GraphQLObjectType,
+  GraphQLSchema,
+  GraphQLString,
+} from 'graphql';
 import { UUIDType } from './types/uuid.js';
 
 export const gqlResponseSchema = Type.Partial(
@@ -21,45 +32,91 @@ export const createGqlResponseSchema = {
   ),
 };
 
-export const gqlSchema = buildSchema(`
-  type Query {
-    memberTypes: [MemberType]
-    users: [User]
-    posts: [Post]
-    profiles: [Profile]
+const userType = new GraphQLObjectType({
+  name: 'User',
+  fields: {
+    id: { type: UUIDType },
+    name: { type: GraphQLString },
+    balance: { type: GraphQLFloat },
+  },
+});
 
-    memberType(id: MemberTypeId): MemberType
-    user(id: UUID): User
-    post(id: UUID): Post
-    profile(id: UUID): Profile
-  }
+const memberTypeId = new GraphQLEnumType({
+  name: 'MemberTypeId',
+  values: {
+    basic: { value: 'basic' },
+    business: { value: 'business' },
+  },
+});
 
-  enum MemberTypeId {
-    basic
-    business
-  }
+const memberType = new GraphQLObjectType({
+  name: 'MemberType',
+  fields: {
+    id: { type: memberTypeId },
+    discount: { type: GraphQLFloat },
+    postsLimitPerMonth: { type: GraphQLInt },
+  },
+});
 
-  type MemberType {
-    id: String
-    discount: Float
-    postsLimitPerMonth: Int
-  }
+const postType = new GraphQLObjectType({
+  name: 'Post',
+  fields: {
+    id: { type: UUIDType },
+    title: { type: GraphQLString },
+    content: { type: GraphQLString },
+  },
+});
 
-  type User {
-    id: ID
-    name: String
-    balance: Float
-  }
+const profileType = new GraphQLObjectType({
+  name: 'Profile',
+  fields: {
+    id: { type: UUIDType },
+    isMale: { type: GraphQLBoolean },
+    yearOfBirth: { type: GraphQLInt },
+  },
+});
 
-  type Post {
-    id: ID
-    title: String
-    content: String
-  }
+const queryType = new GraphQLObjectType({
+  name: 'Query',
+  fields: {
+    users: {
+      type: userType,
+    },
+    memberTypes: {
+      type: memberType,
+    },
+    posts: {
+      type: postType,
+    },
+    profiles: {
+      type: profileType,
+    },
 
-  type Profile {
-    id: ID
-    isMale: Boolean
-    yearOfBirth: Int  
-  }
-`);
+    user: {
+      type: userType,
+      args: {
+        id: { type: UUIDType },
+      },
+    },
+    memberType: {
+      type: memberType,
+      args: {
+        id: { type: memberTypeId },
+      },
+    },
+    post: {
+      type: postType,
+      args: {
+        id: { type: UUIDType },
+      },
+    },
+    profile: {
+      type: profileType,
+      args: {
+        id: { type: UUIDType },
+      },
+    },
+  },
+});
+
+export const gqlSchema = new GraphQLSchema({ query: queryType });

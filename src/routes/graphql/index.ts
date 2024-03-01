@@ -20,10 +20,10 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
       const source = req.body.query;
       const variables = req.body?.variables;
       const rootValue = {
-        posts: () => prisma.post.findMany(),
-        users: () => prisma.user.findMany(),
-        memberTypes: () => prisma.memberType.findMany(),
-        profiles: () => prisma.profile.findMany(),
+        posts: async () => await prisma.post.findMany(),
+        users: async () => await prisma.user.findMany(),
+        memberTypes: async () => await prisma.memberType.findMany(),
+        profiles: async () => await prisma.profile.findMany(),
 
         post: () =>
           prisma.post.findUnique({
