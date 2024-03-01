@@ -1,5 +1,6 @@
 import { Type } from '@fastify/type-provider-typebox';
 import { buildSchema } from 'graphql';
+import { UUIDType } from './types/uuid.js';
 
 export const gqlResponseSchema = Type.Partial(
   Type.Object({
@@ -20,21 +21,26 @@ export const createGqlResponseSchema = {
   ),
 };
 
-export const resourcesSchema = buildSchema(`
+export const gqlSchema = buildSchema(`
   type Query {
     memberTypes: [MemberType]
     users: [User]
     posts: [Post]
     profiles: [Profile]
 
-    memberType(memberTypeId: ID): [MemberType]
-    user(userId: ID): [User]
-    post(postId: ID): [Post]
-    profile(profileId: ID): [Profile]
+    memberType(id: MemberTypeId): MemberType
+    user(id: UUID): User
+    post(id: UUID): Post
+    profile(id: UUID): Profile
+  }
+
+  enum MemberTypeId {
+    basic
+    business
   }
 
   type MemberType {
-    id: ID
+    id: String
     discount: Float
     postsLimitPerMonth: Int
   }

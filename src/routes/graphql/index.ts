@@ -1,9 +1,5 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
-import {
-  resourcesSchema,
-  createGqlResponseSchema,
-  gqlResponseSchema,
-} from './schemas.js';
+import { gqlSchema, createGqlResponseSchema, gqlResponseSchema } from './schemas.js';
 import { graphql } from 'graphql';
 
 const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
@@ -20,39 +16,43 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
     },
 
     async handler(req) {
-      const schema = resourcesSchema;
+      const schema = gqlSchema;
       const source = req.body.query;
+      const variables = req.body?.variables;
       const rootValue = {
         posts: () => prisma.post.findMany(),
         users: () => prisma.user.findMany(),
         memberTypes: () => prisma.memberType.findMany(),
         profiles: () => prisma.profile.findMany(),
 
-        post: ({ postId }: { postId: string }) =>
+        post: () =>
           prisma.post.findUnique({
             where: {
-              id: postId,
+              id: variables?.postId as string,
             },
           }),
 
-        user: ({ userId }) =>
-          prisma.post.findUnique({
+        user: () =>
+          prisma.user.findUnique({
             where: {
-              id: userId as string,
+              id: variables?.userId as string,
             },
           }),
 
-        memberType: ({ memberTypeId }) =>
-          prisma.memberType.findUnique({
+        memberType: async () => {
+          console.log('>>>>>>>> MEMTYPE', variables?.memberTypeId);
+          const response = await prisma.memberType.findUnique({
             where: {
-              id: memberTypeId as string,
+              id: variables?.memberTypeId as string,
             },
-          }),
+          });
+          return response;
+        },
 
-        profile: ({ profileId }) =>
+        profile: () =>
           prisma.profile.findUnique({
             where: {
-              id: profileId as string,
+              id: variables?.profileId as string,
             },
           }),
       };
