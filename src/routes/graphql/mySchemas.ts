@@ -36,6 +36,7 @@ const postType = new GraphQLObjectType({
     id: { type: UUIDType },
     title: { type: GraphQLString },
     content: { type: GraphQLString },
+    authorId: { type: UUIDType },
   },
 });
 
@@ -45,19 +46,65 @@ const profileType = new GraphQLObjectType({
     id: { type: UUIDType },
     isMale: { type: GraphQLBoolean },
     yearOfBirth: { type: GraphQLInt },
-    memberType: { type: memberType },
+    memberTypeId: { type: memberType },
+    memberType: {
+      type: memberType,
+      resolve: async (
+        { memberTypeId }: { memberTypeId: MemberTypeId },
+        _,
+        prisma: PrismaClient,
+      ) => await prisma.memberType.findUnique({ where: { id: memberTypeId } }),
+    },
   },
 });
 
 const userType = new GraphQLObjectType({
   name: 'User',
-  fields: {
+  fields: () => ({
     id: { type: UUIDType },
     name: { type: GraphQLString },
     balance: { type: GraphQLFloat },
-    profile: { type: profileType },
-    posts: { type: new GraphQLList(postType) },
-  },
+    profile: {
+      type: profileType,
+      resolve: async ({ id }: { id: string }, _, prisma: PrismaClient) =>
+        await prisma.profile.findUnique({ where: { userId: id } }),
+    },
+    posts: {
+      type: new GraphQLList(postType),
+      resolve: async ({ id }, __, prisma: PrismaClient) =>
+        await prisma.post.findMany({
+          where: {
+            authorId: id,
+          },
+        }),
+    },
+    userSubscribedTo: {
+      type: new GraphQLList(userType),
+      resolve: async ({ id }, __, prisma: PrismaClient) =>
+        await prisma.user.findMany({
+          where: {
+            subscribedToUser: {
+              some: {
+                subscriberId: id,
+              },
+            },
+          },
+        }),
+    },
+    subscribedToUser: {
+      type: new GraphQLList(userType),
+      resolve: async ({ id }, __, prisma: PrismaClient) =>
+        await prisma.user.findMany({
+          where: {
+            userSubscribedTo: {
+              some: {
+                authorId: id,
+              },
+            },
+          },
+        }),
+    },
+  }),
 });
 
 const queryType = new GraphQLObjectType({
