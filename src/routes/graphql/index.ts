@@ -18,7 +18,7 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
     async handler(req) {
       const schema = gqlSchema;
       const source = req.body.query;
-      const variables = req.body?.variables;
+      const variables = req.body.variables;
       const rootValue = {
         posts: async () => await prisma.post.findMany(),
         users: async () => await prisma.user.findMany(),
@@ -57,7 +57,13 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
           }),
       };
 
-      const response = await graphql({ source, schema, rootValue }).then((response) => {
+      const response = await graphql({
+        source,
+        schema,
+        rootValue,
+        variableValues: variables,
+        contextValue: fastify,
+      }).then((response) => {
         const { data, errors } = response;
         return { data, errors };
       });

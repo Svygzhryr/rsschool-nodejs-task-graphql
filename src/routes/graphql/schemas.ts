@@ -1,12 +1,11 @@
 import { Type } from '@fastify/type-provider-typebox';
 import {
-  buildSchema,
-  graphql,
   GraphQLBoolean,
   GraphQLEnumType,
   GraphQLFloat,
-  GraphQLID,
   GraphQLInt,
+  GraphQLList,
+  GraphQLNonNull,
   GraphQLObjectType,
   GraphQLSchema,
   GraphQLString,
@@ -31,15 +30,6 @@ export const createGqlResponseSchema = {
     },
   ),
 };
-
-const userType = new GraphQLObjectType({
-  name: 'User',
-  fields: {
-    id: { type: UUIDType },
-    name: { type: GraphQLString },
-    balance: { type: GraphQLFloat },
-  },
-});
 
 const memberTypeId = new GraphQLEnumType({
   name: 'MemberTypeId',
@@ -73,6 +63,18 @@ const profileType = new GraphQLObjectType({
     id: { type: UUIDType },
     isMale: { type: GraphQLBoolean },
     yearOfBirth: { type: GraphQLInt },
+    memberType: { type: memberType },
+  },
+});
+
+const userType = new GraphQLObjectType({
+  name: 'User',
+  fields: {
+    id: { type: UUIDType },
+    name: { type: GraphQLString },
+    balance: { type: GraphQLFloat },
+    profile: { type: profileType },
+    posts: { type: new GraphQLList(postType) },
   },
 });
 
@@ -80,40 +82,40 @@ const queryType = new GraphQLObjectType({
   name: 'Query',
   fields: {
     users: {
-      type: userType,
+      type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(userType))),
     },
     memberTypes: {
-      type: memberType,
+      type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(memberType))),
     },
     posts: {
-      type: postType,
+      type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(postType))),
     },
     profiles: {
-      type: profileType,
+      type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(profileType))),
     },
 
     user: {
       type: userType,
       args: {
-        id: { type: UUIDType },
+        id: { type: new GraphQLNonNull(UUIDType) },
       },
     },
     memberType: {
       type: memberType,
       args: {
-        id: { type: memberTypeId },
+        id: { type: new GraphQLNonNull(memberTypeId) },
       },
     },
     post: {
       type: postType,
       args: {
-        id: { type: UUIDType },
+        id: { type: new GraphQLNonNull(UUIDType) },
       },
     },
     profile: {
       type: profileType,
       args: {
-        id: { type: UUIDType },
+        id: { type: new GraphQLNonNull(UUIDType) },
       },
     },
   },
