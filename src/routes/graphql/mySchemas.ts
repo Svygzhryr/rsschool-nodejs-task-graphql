@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { PrismaClient } from '@prisma/client';
 import {
   GraphQLEnumType,
@@ -9,9 +10,11 @@ import {
   GraphQLList,
   GraphQLNonNull,
   GraphQLSchema,
+  GraphQLInputObjectType,
 } from 'graphql';
 import { UUIDType } from './types/uuid.js';
 import { MemberTypeId } from '../member-types/schemas.js';
+import { IPostDto } from './types/interfaces.js';
 
 const memberTypeId = new GraphQLEnumType({
   name: 'MemberTypeId',
@@ -178,4 +181,34 @@ const queryType = new GraphQLObjectType({
   },
 });
 
-export const gqlSchema = new GraphQLSchema({ query: queryType });
+const postDto = new GraphQLInputObjectType({
+  name: 'CreatePostInput',
+  fields: {
+    id: { type: UUIDType },
+    title: { type: GraphQLString },
+    content: { type: GraphQLString },
+    authorId: { type: UUIDType },
+  },
+});
+
+const mutationType = new GraphQLObjectType({
+  name: 'Mutation',
+  fields: {
+    createPost: {
+      type: postType,
+      args: {
+        dto: { type: postDto },
+      },
+      resolve: async (_, { dto: data }: { dto: IPostDto }, prisma: PrismaClient) =>
+        await prisma.post.create({ data }),
+    },
+    createUser: {
+      type: postType,
+    },
+    createProfile: {
+      type: postType,
+    },
+  },
+});
+
+export const gqlSchema = new GraphQLSchema({ query: queryType, mutation: mutationType });
