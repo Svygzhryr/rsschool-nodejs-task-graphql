@@ -14,4 +14,5 @@ export interface IProfileDto {
   isMale: boolean;
   yearOfBirth: number;
   userId: string;
+  memberTypeId: string;
 }

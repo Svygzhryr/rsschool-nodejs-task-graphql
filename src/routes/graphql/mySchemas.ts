@@ -14,7 +14,7 @@ import {
 } from 'graphql';
 import { UUIDType } from './types/uuid.js';
 import { MemberTypeId } from '../member-types/schemas.js';
-import { IPostDto } from './types/interfaces.js';
+import { IPostDto, IProfileDto, IUserDto } from './types/dtos.js';
 
 const memberTypeId = new GraphQLEnumType({
   name: 'MemberTypeId',
@@ -191,22 +191,75 @@ const postDto = new GraphQLInputObjectType({
   },
 });
 
+const userDto = new GraphQLInputObjectType({
+  name: 'CreateUserInput',
+  fields: {
+    id: { type: UUIDType },
+    name: { type: GraphQLString },
+    balance: { type: GraphQLFloat },
+  },
+});
+
+const profileDto = new GraphQLInputObjectType({
+  name: 'CreateProfileInput',
+  fields: {
+    userId: { type: UUIDType },
+    isMale: { type: GraphQLBoolean },
+    yearOfBirth: { type: GraphQLInt },
+    memberTypeId: { type: memberTypeId },
+  },
+});
+
 const mutationType = new GraphQLObjectType({
   name: 'Mutation',
   fields: {
     createPost: {
       type: postType,
       args: {
-        dto: { type: postDto },
+        dto: { type: new GraphQLNonNull(postDto) },
       },
       resolve: async (_, { dto: data }: { dto: IPostDto }, prisma: PrismaClient) =>
         await prisma.post.create({ data }),
     },
     createUser: {
-      type: postType,
+      type: userType,
+      args: {
+        dto: { type: new GraphQLNonNull(userDto) },
+      },
+      resolve: async (_, { dto: data }: { dto: IUserDto }, prisma: PrismaClient) =>
+        await prisma.user.create({ data }),
     },
     createProfile: {
-      type: postType,
+      type: profileType,
+      args: {
+        dto: { type: new GraphQLNonNull(profileDto) },
+      },
+      resolve: async (_, { dto: data }: { dto: IProfileDto }, prisma: PrismaClient) =>
+        await prisma.profile.create({ data }),
+    },
+    deletePost: {
+      type: GraphQLString,
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
+      },
+      resolve: async (_, { id }: { id: string }, prisma: PrismaClient) =>
+        await prisma.post.delete({ where: { id } }),
+    },
+    deleteUser: {
+      type: GraphQLString,
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
+      },
+      resolve: async (_, { id }: { id: string }, prisma: PrismaClient) =>
+        await prisma.user.delete({ where: { id } }),
+    },
+    deleteProfile: {
+      type: GraphQLString,
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
+      },
+      resolve: async (_, { id }: { id: string }, prisma: PrismaClient) =>
+        await prisma.profile.delete({ where: { id } }),
     },
   },
 });
