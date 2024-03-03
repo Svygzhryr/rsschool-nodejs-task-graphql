@@ -191,6 +191,16 @@ const postDto = new GraphQLInputObjectType({
   },
 });
 
+const profileDto = new GraphQLInputObjectType({
+  name: 'CreateProfileInput',
+  fields: {
+    userId: { type: UUIDType },
+    isMale: { type: GraphQLBoolean },
+    yearOfBirth: { type: GraphQLInt },
+    memberTypeId: { type: memberTypeId },
+  },
+});
+
 const userDto = new GraphQLInputObjectType({
   name: 'CreateUserInput',
   fields: {
@@ -200,13 +210,24 @@ const userDto = new GraphQLInputObjectType({
   },
 });
 
-const profileDto = new GraphQLInputObjectType({
-  name: 'CreateProfileInput',
+const postChangeFields = new GraphQLInputObjectType({
+  name: 'ChangePostInput',
   fields: {
-    userId: { type: UUIDType },
+    title: { type: GraphQLString },
+  },
+});
+
+const profileChangeFields = new GraphQLInputObjectType({
+  name: 'ChangeProfileInput',
+  fields: {
     isMale: { type: GraphQLBoolean },
-    yearOfBirth: { type: GraphQLInt },
-    memberTypeId: { type: memberTypeId },
+  },
+});
+
+const userChangeFields = new GraphQLInputObjectType({
+  name: 'ChangeUserInput',
+  fields: {
+    name: { type: GraphQLString },
   },
 });
 
@@ -234,8 +255,11 @@ const mutationType = new GraphQLObjectType({
       args: {
         dto: { type: new GraphQLNonNull(profileDto) },
       },
-      resolve: async (_, { dto: data }: { dto: IProfileDto }, prisma: PrismaClient) =>
-        await prisma.profile.create({ data }),
+      resolve: async (_, { dto: data }: { dto: IProfileDto }, prisma: PrismaClient) => {
+        // какая-то непонятка с проверкой на целое число, с провервой тесты валятся???
+        const response = await prisma.profile.create({ data });
+        return response;
+      },
     },
     deletePost: {
       type: GraphQLString,
@@ -260,6 +284,78 @@ const mutationType = new GraphQLObjectType({
       },
       resolve: async (_, { id }: { id: string }, prisma: PrismaClient) =>
         await prisma.profile.delete({ where: { id } }),
+    },
+    changePost: {
+      type: postType,
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
+        dto: { type: new GraphQLNonNull(postChangeFields) },
+      },
+      resolve: async (
+        _,
+        { id, dto }: { id: string; dto: IPostDto },
+        prisma: PrismaClient,
+      ) => await prisma.post.update({ where: { id }, data: { title: dto.title } }),
+    },
+    changeProfile: {
+      type: profileType,
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
+        dto: { type: new GraphQLNonNull(profileChangeFields) },
+      },
+      resolve: async (
+        _,
+        { id, dto }: { id: string; dto: IProfileDto },
+        prisma: PrismaClient,
+      ) => await prisma.profile.update({ where: { id }, data: { isMale: dto.isMale } }),
+    },
+    changeUser: {
+      type: userType,
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
+        dto: { type: new GraphQLNonNull(userChangeFields) },
+      },
+      resolve: async (
+        _,
+        { id, dto }: { id: string; dto: IUserDto },
+        prisma: PrismaClient,
+      ) => await prisma.user.update({ where: { id }, data: { name: dto.name } }),
+    },
+    subscribeTo: {
+      type: userType,
+      args: {
+        userId: { type: new GraphQLNonNull(UUIDType) },
+        authorId: { type: new GraphQLNonNull(UUIDType) },
+      },
+      resolve: async (
+        _,
+        { userId, authorId }: { userId: string; authorId: string },
+        prisma: PrismaClient,
+      ) =>
+        await prisma.user.update({
+          where: { id: userId },
+          data: { userSubscribedTo: { create: { authorId } } },
+        }),
+    },
+    unsubscribeFrom: {
+      type: GraphQLString,
+      args: {
+        userId: { type: new GraphQLNonNull(UUIDType) },
+        authorId: { type: new GraphQLNonNull(UUIDType) },
+      },
+      resolve: async (
+        _,
+        { userId, authorId }: { userId: string; authorId: string },
+        prisma: PrismaClient,
+      ) =>
+        await prisma.subscribersOnAuthors.delete({
+          where: {
+            subscriberId_authorId: {
+              subscriberId: userId,
+              authorId,
+            },
+          },
+        }),
     },
   },
 });
