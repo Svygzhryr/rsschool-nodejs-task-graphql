@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
+import { DefaultArgs } from '@prisma/client/runtime/library.js';
 import {
   GraphQLEnumType,
   GraphQLObjectType,
@@ -12,6 +12,7 @@ import {
   GraphQLSchema,
   GraphQLInputObjectType,
 } from 'graphql';
+
 import { UUIDType } from './types/uuid.js';
 import { MemberTypeId } from '../member-types/schemas.js';
 import { IPostDto, IProfileDto, IUserDto } from './types/dtos.js';
@@ -61,7 +62,12 @@ const profileType = new GraphQLObjectType({
   },
 });
 
-const userType = new GraphQLObjectType({
+const userType: GraphQLObjectType<
+  {
+    id: string;
+  },
+  PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>
+> = new GraphQLObjectType({
   name: 'User',
   fields: () => ({
     id: { type: UUIDType },
