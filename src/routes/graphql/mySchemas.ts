@@ -256,34 +256,33 @@ const mutationType = new GraphQLObjectType({
         dto: { type: new GraphQLNonNull(profileDto) },
       },
       resolve: async (_, { dto: data }: { dto: IProfileDto }, prisma: PrismaClient) => {
-        // какая-то непонятка с проверкой на целое число, с провервой тесты валятся???
         const response = await prisma.profile.create({ data });
         return response;
       },
     },
     deletePost: {
-      type: GraphQLString,
+      type: GraphQLBoolean,
       args: {
         id: { type: new GraphQLNonNull(UUIDType) },
       },
       resolve: async (_, { id }: { id: string }, prisma: PrismaClient) =>
-        await prisma.post.delete({ where: { id } }),
+        !!(await prisma.post.delete({ where: { id } })),
     },
     deleteUser: {
-      type: GraphQLString,
+      type: GraphQLBoolean,
       args: {
         id: { type: new GraphQLNonNull(UUIDType) },
       },
       resolve: async (_, { id }: { id: string }, prisma: PrismaClient) =>
-        await prisma.user.delete({ where: { id } }),
+        !!(await prisma.user.delete({ where: { id } })),
     },
     deleteProfile: {
-      type: GraphQLString,
+      type: GraphQLBoolean,
       args: {
         id: { type: new GraphQLNonNull(UUIDType) },
       },
       resolve: async (_, { id }: { id: string }, prisma: PrismaClient) =>
-        await prisma.profile.delete({ where: { id } }),
+        !!(await prisma.profile.delete({ where: { id } })),
     },
     changePost: {
       type: postType,
@@ -338,7 +337,7 @@ const mutationType = new GraphQLObjectType({
         }),
     },
     unsubscribeFrom: {
-      type: GraphQLString,
+      type: GraphQLBoolean,
       args: {
         userId: { type: new GraphQLNonNull(UUIDType) },
         authorId: { type: new GraphQLNonNull(UUIDType) },
@@ -348,14 +347,14 @@ const mutationType = new GraphQLObjectType({
         { userId, authorId }: { userId: string; authorId: string },
         prisma: PrismaClient,
       ) =>
-        await prisma.subscribersOnAuthors.delete({
+        !!(await prisma.subscribersOnAuthors.delete({
           where: {
             subscriberId_authorId: {
               subscriberId: userId,
               authorId,
             },
           },
-        }),
+        })),
     },
   },
 });
