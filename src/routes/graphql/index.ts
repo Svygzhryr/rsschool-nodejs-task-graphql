@@ -26,7 +26,7 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
         contextValue: fastify.prisma,
       });
       const { data, errors } = response;
-      return { data, errors: isQueryTooDeep || errors };
+      return { data, errors: isQueryTooDeep.length > 0 ? isQueryTooDeep : errors };
     },
   });
 };
